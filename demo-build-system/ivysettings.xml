@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivysettings>
+
+    <typedef name="s3" classname="org.springframework.aws.ivy.S3Resolver"/>
+
+    <settings defaultResolver="main-lookup"/>
+
+    <caches resolutionCacheDir="${ivy.cache.dir}/resolution" repositoryCacheDir="${ivy.cache.dir}/repository"
+            ivyPattern="[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+            artifactPattern="[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+            useOrigin="false" checkUpToDate="false"/>
+
+    <macrodef name="s3repo">
+        <attribute name="artifact.type"/>
+        <attribute name="release.type"/>
+        <url name="s3.read.resolver">
+            <ivy pattern="http://repository.springsource.com/ivy/@{artifact.type}/@{release.type}/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+            <artifact pattern="http://repository.springsource.com/ivy/@{artifact.type}/@{release.type}/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+        </url>
+    </macrodef> 
+  
+    <macrodef name="eclipse-build-read">
+        <attribute name="artifact.type"/>
+        <attribute name="release.type"/>
+        <url name="eclipse.build.read.resolver">
+            <ivy pattern="http://build.eclipse.org/rt/virgo/ivy/@{artifact.type}/@{release.type}/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+            <artifact pattern="http://build.eclipse.org/rt/virgo/ivy/@{artifact.type}/@{release.type}/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+        </url>
+    </macrodef>
+
+    <resolvers>
+  
+        <filesystem name="local-repository">
+            <ivy pattern="${integration.cache.dir}/[organisation]/[module]/[revision]/[artifact]-[revision].xml" /> 
+            <artifact pattern="${integration.cache.dir}/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" /> 
+        </filesystem>   
+
+        <chain name="external-lookup" returnFirst="true">
+            <s3repo name="bundle-external-repository"   artifact.type="bundles"     release.type="external"/>
+            <s3repo name="library-external-repository"  artifact.type="libraries"   release.type="external"/>
+        </chain>
+
+        <chain name="virgo-lookup" returnFirst="true">
+            <eclipse-build-read name="eclipse-bundle-release-repository"        artifact.type="bundles" release.type="release"/>
+<!--             <eclipse-build-read name="eclipse-bundle-milestone-repository"      artifact.type="bundles" release.type="milestone"/>
+            <eclipse-build-read name="eclipse-bundle-snapshot-repository"       artifact.type="bundles" release.type="snapshot"/>
+            <eclipse-build-read name="eclipse-library-release-repository"       artifact.type="libraries" release.type="release"/>
+            <eclipse-build-read name="eclipse-library-milestone-repository"     artifact.type="libraries" release.type="milestone"/>
+            <eclipse-build-read name="eclipse-library-snapshot-repository"      artifact.type="libraries" release.type="snapshot"/> -->
+        </chain>
+
+        <chain name="third-party-lookup" returnFirst="true">
+            <s3repo name="bundle-release-repository"    artifact.type="bundles"     release.type="release"/>
+            <s3repo name="bundle-milestone-repository"  artifact.type="bundles"     release.type="milestone"/>
+            <s3repo name="bundle-snapshot-repository"   artifact.type="bundles"     release.type="snapshot"/>
+            <s3repo name="library-release-repository"   artifact.type="libraries"   release.type="release"/>
+            <s3repo name="library-milestone-repository" artifact.type="libraries"   release.type="milestone"/>
+            <s3repo name="library-snapshot-repository"  artifact.type="libraries"   release.type="snapshot"/>
+        </chain>
+
+        <chain name="main-lookup">
+            <resolver ref="local-repository"/>
+            <resolver ref="third-party-lookup"/>
+            <resolver ref="external-lookup"/>
+            <resolver ref="virgo-lookup"/>
+        </chain>
+  
+    </resolvers>
+
+</ivysettings>
